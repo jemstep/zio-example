@@ -46,9 +46,10 @@ object ExampleApp extends App {
       _ <- log("END: Fork Join with separate output effect\n")
 
       _ <- log("BEGIN: Fork Join with combined output effect")
-      _ <- timePrintWrite("Fib1")(request1).fork
-      _ <- timePrintWrite("Fib2")(request2).fork
-      _ <- timePrintWrite("Fib3")(request3).fork
+      tfib1 <- timePrintWrite("Fib1")(request1).fork
+      tfib2 <- timePrintWrite("Fib2")(request2).fork
+      tfib3 <- timePrintWrite("Fib3")(request3).fork
+      _ <- (tfib1 zip tfib2 zip tfib3).join
       _ <- log("END:   Fork Join with combined output effect\n")
 
       _ <- log("BEGIN: Parallel collect with foreach output")
