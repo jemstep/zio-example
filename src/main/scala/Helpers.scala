@@ -1,5 +1,6 @@
 import java.time.LocalDateTime
 
+import Helpers.TimedResponse
 import com.softwaremill.sttp.{Request, sttp}
 import com.softwaremill.sttp._
 import scalaz.zio.{Task, ZIO}
@@ -20,6 +21,7 @@ object Helpers {
 
   val extractDate: Response[String] => Option[String] = r => r.header("Date")
 
+  type TimedResponse = TimedResult[Response[String]]
 }
 
 
@@ -30,7 +32,7 @@ object FutureHelpers {
     _ <- Future.successful(println(s"$now\t$msg"))
   } yield ()
 
-  def futureReq(req: Request[String, Nothing])(implicit ec: ExecutionContext, b: SttpBackend[Future, Nothing]): Future[TimedResult[Response[String]]] = {
+  def futureReq(req: Request[String, Nothing])(implicit ec: ExecutionContext, b: SttpBackend[Future, Nothing]): Future[TimedResponse] = {
     for {
       t1 <- Future.successful(LocalDateTime.now())
       r  <- req.send()
@@ -38,7 +40,7 @@ object FutureHelpers {
     } yield TimedResult(t1, t2, r)
   }
 
-  def fromFuture(request: Request[String, Nothing])(implicit b: SttpBackend[Future, Nothing]): Task[TimedResult[Response[String]]] =
+  def fromFuture(request: Request[String, Nothing])(implicit b: SttpBackend[Future, Nothing]): Task[TimedResponse] =
     ZIO.fromFuture(implicit ec => futureReq(request))
 
 }

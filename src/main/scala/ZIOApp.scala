@@ -20,8 +20,8 @@ object ZIOApp extends App {
     implicit val backend: SttpBackend[Task, Nothing]  = AsyncHttpClientZioBackend()
 
     // Declare now, run later
-    val timedTasks: List[Task[TimedResult[Response[String]]]] = reqs.map(_.send()).map(timeTask)
-    val timedResults: Task[List[TimedResult[Response[String]]]] = Task.collectAllPar(timedTasks)
+    val timedTasks: List[Task[TimedResponse]] = reqs.map(_.send()).map(timeTask)
+    val timedResults: Task[List[TimedResponse]] = Task.collectAllPar(timedTasks)
 
     for {
       _ <- log("BEGIN: Basic Sequential")

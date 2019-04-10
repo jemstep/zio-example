@@ -18,12 +18,12 @@ object ZIOFutureApp extends App {
 
     implicit val backend: SttpBackend[Future, Nothing] = AsyncHttpClientFutureBackend()
 
-    val zfut1: Task[TimedResult[Response[String]]] = FutureHelpers.fromFuture(request1)
-    val zfut2: Task[TimedResult[Response[String]]] = FutureHelpers.fromFuture(request2)
-    val zfut3: Task[TimedResult[Response[String]]] = FutureHelpers.fromFuture(request3)
+    val zfut1: Task[TimedResponse] = FutureHelpers.fromFuture(request1)
+    val zfut2: Task[TimedResponse] = FutureHelpers.fromFuture(request2)
+    val zfut3: Task[TimedResponse] = FutureHelpers.fromFuture(request3)
 
-    val timedTasks: List[Task[TimedResult[Response[String]]]] = List(zfut1, zfut2, zfut3)
-    val timedResults: Task[List[TimedResult[Response[String]]]] = Task.collectAllPar(timedTasks)
+    val timedTasks: List[Task[TimedResponse]] = List(zfut1, zfut2, zfut3)
+    val timedResults: Task[List[TimedResponse]] = Task.collectAllPar(timedTasks)
 
       for {
       _ <- log("BEGIN: ZIO Sequential Future 1")
