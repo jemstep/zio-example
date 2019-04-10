@@ -1,20 +1,17 @@
-import java.time.LocalDateTime
-
-import com.softwaremill.sttp.{Request, Response, SttpBackend}
 import com.softwaremill.sttp.asynchttpclient.future.AsyncHttpClientFutureBackend
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
-
 import Helpers._
 import FutureHelpers._
+import com.softwaremill.sttp.SttpBackend
 
 object FutureApp extends App {
   implicit val ec = ExecutionContext.global
 
   def httpClientExample: Future[Unit] = {
 
-    implicit val backend  = AsyncHttpClientFutureBackend()
+    implicit val backend: SttpBackend[Future, Nothing] = AsyncHttpClientFutureBackend()
 
     val outside1 = futureReq(request1)
     val outside2 = futureReq(request2)
@@ -30,14 +27,14 @@ object FutureApp extends App {
       _ <- log(seq3)
       _ <- log("END:   Basic Sequential Future\n")
 
-      _ <- log("BEGIN: Basic Concurrent Future")
+      _ <- log("BEGIN: Basic Parallel Future")
       c1 <- outside1
       c2 <- outside2
       c3 <- outside3
       _ <- log(c1)
       _ <- log(c2)
       _ <- log(c3)
-      _ <- log("END:   Basic Concurrent Future\n")
+      _ <- log("END:   Basic Parallel Future\n")
 
     } yield backend.close()
 
@@ -47,22 +44,4 @@ object FutureApp extends App {
     case _ => 1
   }
   val r = Await.result(result, 20.seconds)
-}
-
-
-object FutureHelpers {
-
-  def log[A](msg: A)(implicit ec: ExecutionContext): Future[Unit] = for {
-    now <- Future.successful(LocalDateTime.now)
-    _ <- Future.successful(println(s"$now\t$msg"))
-  } yield ()
-
-  def futureReq(req: Request[String, Nothing])(implicit ec: ExecutionContext, b: SttpBackend[Future, Nothing]): Future[TimedResult[Response[String]]] = {
-    for {
-      t1 <- Future.successful(LocalDateTime.now())
-      r  <- req.send()
-      t2 <- Future.successful(LocalDateTime.now())
-    } yield TimedResult(t1, t2, r)
-  }
-
 }

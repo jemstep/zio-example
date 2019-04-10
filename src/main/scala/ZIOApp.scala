@@ -17,7 +17,7 @@ object ZIOApp extends App {
 
   def httpClientExample: ZIO[Console, Throwable, Unit] = {
 
-    implicit val backend  = AsyncHttpClientZioBackend()
+    implicit val backend: SttpBackend[Task, Nothing]  = AsyncHttpClientZioBackend()
 
     // Declare now, run later
     val timedTasks: List[Task[TimedResult[Response[String]]]] = reqs.map(_.send()).map(timeTask)

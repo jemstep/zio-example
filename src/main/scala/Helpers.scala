@@ -1,5 +1,10 @@
+import java.time.LocalDateTime
+
 import com.softwaremill.sttp.{Request, sttp}
 import com.softwaremill.sttp._
+import scalaz.zio.{Task, ZIO}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 object Helpers {
   val githubQuery = "http language:scala"
@@ -14,5 +19,26 @@ object Helpers {
   val reqs = List(request1, request2, request3)
 
   val extractDate: Response[String] => Option[String] = r => r.header("Date")
+
+}
+
+
+object FutureHelpers {
+
+  def log[A](msg: A)(implicit ec: ExecutionContext): Future[Unit] = for {
+    now <- Future.successful(LocalDateTime.now)
+    _ <- Future.successful(println(s"$now\t$msg"))
+  } yield ()
+
+  def futureReq(req: Request[String, Nothing])(implicit ec: ExecutionContext, b: SttpBackend[Future, Nothing]): Future[TimedResult[Response[String]]] = {
+    for {
+      t1 <- Future.successful(LocalDateTime.now())
+      r  <- req.send()
+      t2 <- Future.successful(LocalDateTime.now())
+    } yield TimedResult(t1, t2, r)
+  }
+
+  def fromFuture(request: Request[String, Nothing])(implicit b: SttpBackend[Future, Nothing]): Task[TimedResult[Response[String]]] =
+    ZIO.fromFuture(implicit ec => futureReq(request))
 
 }
