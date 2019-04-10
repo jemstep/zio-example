@@ -13,4 +13,6 @@ object Helpers {
   val request3: Request[String, Nothing] = sttp.get(uri3)
   val reqs = List(request1, request2, request3)
 
+  val extractDate: Response[String] => Option[String] = r => r.header("Date")
+
 }

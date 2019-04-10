@@ -1,4 +1,5 @@
 
+import java.io.{File, PrintWriter}
 import java.time.LocalDateTime
 
 import scalaz.zio._
@@ -65,6 +66,37 @@ object ZIOHelpers {
   def log(msg: String): ZIO[Console, Throwable, Unit] = for {
     now <- Task(LocalDateTime.now)
     _ <- putStrLn(s"$now\t$msg")
+  } yield ()
+
+  def timePrintWriteI(prefix: String)(req: (Request[String, Nothing], Int))(implicit backend: SttpBackend[Task, Nothing]): ZIO[Console, Throwable, Unit] = {
+    timePrintWrite(s"$prefix${req._2 + 1}")(req._1)
+  }
+
+  def timePrintWrite(prefix: String)(req: Request[String, Nothing])(implicit backend: SttpBackend[Task, Nothing]): ZIO[Console, Throwable, Unit] = {
+    for {
+      t <- timeTask(req.send())
+      _ <- printWrite(prefix, extractDate)(t)
+    } yield ()
+  }
+
+  def printWriteI[Result, E](prefix: String, extract: Result => E)(tr: (TimedResult[Result], Int)): ZIO[Console, Throwable, Unit] = {
+    printWrite(s"$prefix${tr._2 + 1}", extract)(tr._1)
+  }
+
+  def printWrite[Result](prefix: String)(tr: TimedResult[Result]): ZIO[Console, Throwable, Unit] = {
+    val ext: Result => Result = r => r
+    printWrite(prefix, ext)(tr)
+  }
+
+  def printWrite[Result, E](prefix: String, extract: Result => E)(tr: TimedResult[Result]): ZIO[Console, Throwable, Unit] = for {
+    now <- Task(LocalDateTime.now)
+    header = s"$now $prefix Start: '${tr.start}' End: '${tr.end}' Extract: '${extract(tr.result)}'"
+    _ <- putStrLn(s"$header")
+    filename = s"/tmp/zio-${prefix}-${now}.out"
+    pw <- Task(new PrintWriter(new File(filename)))
+    txt = s"$header\n\n${tr.result}"
+    _ <- Task(pw.write(txt))
+    _ <- Task(pw.close())
   } yield ()
 
 }
