@@ -85,7 +85,7 @@ object ExampleApp extends App {
 
   def printWrite[Result, E](prefix: String, extract: Result => E)(tr: TimedResult[Result]): ZIO[Console, Throwable, Unit] = for {
     now <- Task(LocalDateTime.now)
-    header = s"$now $prefix Start: '${tr.start}' End: '${tr.end}' Diff: '${tr.diff}' Extract: '${extract(tr.result)}'"
+    header = s"$now $prefix Start: '${tr.start}' End: '${tr.end}' Extract: '${extract(tr.result)}'"
     _ <- putStrLn(s"$header")
     filename = s"/tmp/zio-${prefix}-${now}.out"
     pw <- Task(new PrintWriter(new File(filename)))
@@ -107,6 +107,4 @@ object ExampleApp extends App {
 
 }
 
-case class TimedResult[Result](start: LocalDateTime, end: LocalDateTime, result: Result) {
-  def diff = end.getSecond - start.getSecond
-}
+case class TimedResult[Result](start: LocalDateTime, end: LocalDateTime, result: Result)
