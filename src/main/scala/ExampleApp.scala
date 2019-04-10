@@ -34,7 +34,7 @@ object ExampleApp extends App {
       tuple <- fiber.join
       _ <- printWrite("Par1", extractDate)(tuple._1)
       _ <- printWrite("Par2", extractDate)(tuple._2)
-      _ <- ZIO.foreachPar(reqs)(timePrintWrite("All"))
+      _ <- ZIO.foreachPar(reqs.zipWithIndex)(timePrintWrite("All"))
     } yield {
       backend.close()
     }
@@ -43,12 +43,12 @@ object ExampleApp extends App {
 
   val extractDate: Response[String] => Option[String] = r => r.header("Date")
 
-  def timePrintWrite[R[_], S](prefix: String)(req: Request[String, Nothing]): ZIO[Console, Throwable, Unit] = {
+  def timePrintWrite[R[_], S](prefix: String)(req: (Request[String, Nothing], Int)): ZIO[Console, Throwable, Unit] = {
     implicit val backend  = AsyncHttpClientZioBackend()
 
     for {
-      t <- taskTime(req.send())
-      _ <- printWrite(prefix, extractDate)(t)
+      t <- taskTime(req._1.send())
+      _ <- printWrite(s"${prefix}${req._2 + 1}", extractDate)(t)
     } yield backend.close()
   }
 
