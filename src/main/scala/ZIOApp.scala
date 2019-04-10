@@ -9,7 +9,7 @@ import TimedResult._
 import Helpers._
 import ZIOHelpers._
 
-object ExampleApp extends App {
+object ZIOApp extends App {
 
   def run(args: List[String]): ZIO[Console, Nothing, StatusCode] =
     httpClientExample.fold[Int](_ => 1, _ => 0)
