@@ -13,7 +13,9 @@ val specs2Deps = Seq(
 
 val logBack = Seq("ch.qos.logback" % "logback-classic" % "1.2.3")
 
-val commonDeps = Seq("org.scalaz" %% "scalaz-zio" % "0.18") ++ specs2Deps ++ logBack
+val commonDeps = Seq(
+  "com.softwaremill.sttp" %% "core" % "1.5.12-SNAPSHOT",
+  "com.softwaremill.sttp" %% "async-http-client-backend-zio" % "1.5.12-SNAPSHOT") ++ specs2Deps ++ logBack
 
 libraryDependencies ++= commonDeps
 
@@ -69,7 +71,7 @@ scalacOptions ++= Seq(
 scalacOptions in Test ++= Seq("-Yrangepos")
 
 // http://www.wartremover.org/doc/warts.html
-wartremoverErrors in (Compile, compile) ++= Warts.unsafe
+wartremoverErrors in (Compile, compile) ++= Warts.unsafe.filter(w => w != Wart.Any)
 wartremoverErrors in (Compile, compile) ++= Seq(
   Wart.Equals,
   Wart.JavaConversions,

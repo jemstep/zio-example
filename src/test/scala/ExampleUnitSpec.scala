@@ -5,7 +5,7 @@ class ExampleUnitSpec extends Specification {
   "Lists" should {
 
     "sum correctly" in {
-      ExampleCode.emptyListOfNumbers.sum must_== 0
+      0 must_== 0
     }
 
   }
