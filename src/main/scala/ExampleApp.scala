@@ -1,11 +1,13 @@
+
 import java.time.LocalDateTime
-import java.io._
 
 import scalaz.zio._
-import scalaz.zio.console.{Console, _}
+import scalaz.zio.console.{Console, putStrLn}
 import com.softwaremill.sttp._
 import com.softwaremill.sttp.asynchttpclient.zio.AsyncHttpClientZioBackend
 import TimedResult._
+import Helpers._
+import ZIOHelpers._
 
 object ExampleApp extends App {
 
@@ -15,16 +17,6 @@ object ExampleApp extends App {
   def httpClientExample: ZIO[Console, Throwable, Unit] = {
 
     implicit val backend  = AsyncHttpClientZioBackend()
-    val githubQuery = "http language:scala"
-    val uri1 = uri"https://api.github.com/search/repositories?q=$githubQuery"
-
-    val searchQuery = "scala +zio +cats-effect"
-    val uri2 = uri"https://www.google.com/search?q=$searchQuery"
-    val uri3 = uri"https://duckduckgo.com/search?q=$searchQuery"
-    val request1: Request[String, Nothing] = sttp.get(uri1)
-    val request2: Request[String, Nothing] = sttp.get(uri2)
-    val request3: Request[String, Nothing] = sttp.get(uri3)
-    val reqs = List(request1, request2, request3)
 
     // Declare now, run later
     val timedTasks: List[Task[TimedResult[Response[String]]]] = reqs.map(_.send()).map(timeTask)
@@ -68,49 +60,11 @@ object ExampleApp extends App {
 
 }
 
-case class TimedResult[Result](start: LocalDateTime, end: LocalDateTime, result: Result)
-
-object TimedResult {
-
-  val extractDate: Response[String] => Option[String] = r => r.header("Date")
-
-  def timePrintWriteI(prefix: String)(req: (Request[String, Nothing], Int)): ZIO[Console, Throwable, Unit] = {
-    timePrintWrite(s"$prefix${req._2 + 1}")(req._1)
-  }
-
-  def timePrintWrite(prefix: String)(req: Request[String, Nothing]): ZIO[Console, Throwable, Unit] = {
-    implicit val backend  = AsyncHttpClientZioBackend()
-
-    for {
-      t <- timeTask(req.send())
-      _ <- printWrite(prefix, extractDate)(t)
-    } yield backend.close()
-  }
-
-  def printWriteI[Result, E](prefix: String, extract: Result => E)(tr: (TimedResult[Result], Int)): ZIO[Console, Throwable, Unit] = {
-    printWrite(s"$prefix${tr._2 + 1}", extract)(tr._1)
-  }
-
-  def printWrite[Result, E](prefix: String, extract: Result => E)(tr: TimedResult[Result]): ZIO[Console, Throwable, Unit] = for {
-    now <- Task(LocalDateTime.now)
-    header = s"$now $prefix Start: '${tr.start}' End: '${tr.end}' Extract: '${extract(tr.result)}'"
-    _ <- putStrLn(s"$header")
-    filename = s"/tmp/zio-${prefix}-${now}.out"
-    pw <- Task(new PrintWriter(new File(filename)))
-    txt = s"$header\n\n${tr.result}"
-    _ <- Task(pw.write(txt))
-    _ <- Task(pw.close())
-  } yield ()
+object ZIOHelpers {
 
   def log(msg: String): ZIO[Console, Throwable, Unit] = for {
     now <- Task(LocalDateTime.now)
     _ <- putStrLn(s"$now\t$msg")
   } yield ()
-
-  def timeTask[Result](task: Task[Result]): Task[TimedResult[Result]] = for {
-    t1 <- Task(LocalDateTime.now())
-    r  <- task
-    t2 <- Task(LocalDateTime.now())
-  } yield TimedResult(t1, t2, r)
 
 }
