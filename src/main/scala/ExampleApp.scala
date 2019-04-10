@@ -17,21 +17,25 @@ object ExampleApp extends App {
     val githubQuery = "http language:scala"
     val uri1 = uri"https://api.github.com/search/repositories?q=$githubQuery"
 
-    val googleQuery = "scala +zio +cats-effect"
-    val uri2 = uri"https://www.google.com/search?q=$googleQuery"
+    val searchQuery = "scala +zio +cats-effect"
+    val uri2 = uri"https://www.google.com/search?q=$searchQuery"
+    val uri3 = uri"https://duckduckgo.com/search?q=$searchQuery"
     val request1: Request[String, Nothing] = sttp.get(uri1)
     val request2: Request[String, Nothing] = sttp.get(uri2)
-    val reqs = List(request1, request2)
+    val request3: Request[String, Nothing] = sttp.get(uri3)
+    val reqs = List(request1, request2, request3)
 
     for {
       _ <- timePrintWrite("Seq")((request1, 0))
       _ <- timePrintWrite("Seq")((request2, 1))
       fiber1 <- taskTime(request1.send()).fork
       fiber2 <- taskTime(request2.send()).fork
-      fiber = fiber1 zip fiber2
+      fiber3 <- taskTime(request3.send()).fork
+      fiber = fiber1 zip fiber2 zip fiber3
       tuple <- fiber.join
-      _ <- printWrite("Par1", extractDate)(tuple._1)
-      _ <- printWrite("Par2", extractDate)(tuple._2)
+      _ <- printWrite("Par1", extractDate)(tuple._1._1)
+      _ <- printWrite("Par2", extractDate)(tuple._1._2)
+      _ <- printWrite("Par3", extractDate)(tuple._2)
       _ <- ZIO.foreachPar(reqs.zipWithIndex)(timePrintWrite("All"))
     } yield {
       backend.close()
