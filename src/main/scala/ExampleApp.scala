@@ -5,6 +5,7 @@ import scalaz.zio._
 import scalaz.zio.console.{Console, _}
 import com.softwaremill.sttp._
 import com.softwaremill.sttp.asynchttpclient.zio.AsyncHttpClientZioBackend
+import TimedResult._
 
 object ExampleApp extends App {
 
@@ -63,6 +64,12 @@ object ExampleApp extends App {
 
   }
 
+}
+
+case class TimedResult[Result](start: LocalDateTime, end: LocalDateTime, result: Result)
+
+object TimedResult {
+
   val extractDate: Response[String] => Option[String] = r => r.header("Date")
 
   def timePrintWriteI(prefix: String)(req: (Request[String, Nothing], Int)): ZIO[Console, Throwable, Unit] = {
@@ -105,5 +112,3 @@ object ExampleApp extends App {
   } yield TimedResult(t1, t2, r)
 
 }
-
-case class TimedResult[Result](start: LocalDateTime, end: LocalDateTime, result: Result)
