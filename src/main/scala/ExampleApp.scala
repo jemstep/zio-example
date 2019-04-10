@@ -32,7 +32,7 @@ object ExampleApp extends App {
       _ <- log("BEGIN: Basic Sequential")
       _ <- timePrintWrite("Seq1")(request1)
       _ <- timePrintWrite("Seq2")(request2)
-      _ <- log("END:   Basic Sequential")
+      _ <- log("END:   Basic Sequential\n")
 
       _ <- log("BEGIN: Fork Join with separate output effect")
       fiber1 <- taskTime(request1.send()).fork
@@ -43,22 +43,22 @@ object ExampleApp extends App {
       _ <- printWrite("Par1", extractDate)(tuple._1._1)
       _ <- printWrite("Par2", extractDate)(tuple._1._2)
       _ <- printWrite("Par3", extractDate)(tuple._2)
-      _ <- log("END: Fork Join with separate output effect")
+      _ <- log("END: Fork Join with separate output effect\n")
 
       _ <- log("BEGIN: Fork Join with combined output effect")
       _ <- timePrintWrite("Fib1")(request1).fork
       _ <- timePrintWrite("Fib2")(request2).fork
       _ <- timePrintWrite("Fib3")(request3).fork
-      _ <- log("END:   Fork Join with combined output effect")
+      _ <- log("END:   Fork Join with combined output effect\n")
 
       _ <- log("BEGIN: Parallel collect with foreach output")
       all <- Task.collectAllPar(timed)
       _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("Col", extractDate))
-      _ <- log("END:   Parallel collect with foreach output")
+      _ <- log("END:   Parallel collect with foreach output\n")
 
       _ <- log("BEGIN: Parallel foreach")
       _ <- ZIO.foreachPar(reqs.zipWithIndex)(timePrintWriteI("For"))
-      _ <- log("END:   Parallel foreach")
+      _ <- log("END:   Parallel foreach\n")
     } yield backend.close()
 
   }
@@ -85,7 +85,7 @@ object ExampleApp extends App {
   def printWrite[Result, E](prefix: String, extract: Result => E)(tr: TimedResult[Result]): ZIO[Console, Throwable, Unit] = for {
     now <- Task(LocalDateTime.now)
     header = s"$now $prefix Start: '${tr.start}' End: '${tr.end}' Diff: '${tr.diff}' Extract: '${extract(tr.result)}'"
-    _ <- putStrLn(s"\n\n>>>\n$header\n<<<\n")
+    _ <- putStrLn(s"$header")
     filename = s"/tmp/zio-${prefix}-${now}.out"
     pw <- Task(new PrintWriter(new File(filename)))
     txt = s"$header\n\n${tr.result}"
