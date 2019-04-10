@@ -9,15 +9,17 @@ import com.softwaremill.sttp.asynchttpclient.zio.AsyncHttpClientZioBackend
 import TimedResult._
 import Helpers._
 import ZIOHelpers._
+import org.slf4j.{Logger, LoggerFactory}
 
 object ZIOApp extends App {
 
+  def logger: Logger = LoggerFactory.getLogger(this.getClass)
+  implicit val backend: SttpBackend[Task, Nothing]  = AsyncHttpClientZioBackend()
+
   def run(args: List[String]): ZIO[Console, Nothing, StatusCode] =
-    httpClientExample.fold[Int](_ => 1, _ => 0)
+    httpClientExample.foldM(err => handleError(err, logger), _ => UIO.succeed(0))
 
   def httpClientExample: ZIO[Console, Throwable, Unit] = {
-
-    implicit val backend: SttpBackend[Task, Nothing]  = AsyncHttpClientZioBackend()
 
     // Declare now, run later
     val timedTasks: List[Task[TimedResponse]] = reqs.map(_.send()).map(timeTask)
@@ -51,6 +53,12 @@ object ZIOApp extends App {
       all <- timedResults
       _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("collectAllPar", extractDate))
       _ <- log("END:   Parallel collect with separate foreach output\n")
+
+      _ <- log("BEGIN: Parallel collect with an error")
+      tasksWithErr = List(request1.send(), errorResponse, request3.send()).map(timeTask)
+      all <- Task.collectAllPar(tasksWithErr)
+      _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("collectAllParWithErr", extractDate))
+      _ <- log("END:   Parallel collect with an error\n")
 
       _ <- log("BEGIN: Parallel foreach with combined output effect")
       _ <- ZIO.foreachPar(reqs.zipWithIndex)(timePrintWriteI("foreachPar"))

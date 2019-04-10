@@ -5,18 +5,19 @@ import com.softwaremill.sttp._
 import Helpers._
 import ZIOHelpers._
 import com.softwaremill.sttp.asynchttpclient.future.AsyncHttpClientFutureBackend
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object ZIOFutureApp extends App {
+  def logger: Logger = LoggerFactory.getLogger(this.getClass)
   implicit val ec = ExecutionContext.global
+  implicit val backend: SttpBackend[Future, Nothing] = AsyncHttpClientFutureBackend()
 
   def run(args: List[String]): ZIO[Console, Nothing, StatusCode] =
-    httpClientExample.fold[Int](_ => 1, _ => 0)
+    httpClientExample.foldM(err => handleError(err, logger), _ => UIO.succeed(0))
 
   def httpClientExample: ZIO[Console, Throwable, Unit] = {
-
-    implicit val backend: SttpBackend[Future, Nothing] = AsyncHttpClientFutureBackend()
 
     val zfut1: Task[TimedResponse] = FutureHelpers.fromFuture(request1)
     val zfut2: Task[TimedResponse] = FutureHelpers.fromFuture(request2)
@@ -46,7 +47,7 @@ object ZIOFutureApp extends App {
       _ <- log("END:   ZIO Parallel Future 1\n")
 
       _ <- log("BEGIN: ZIO Parallel Future 2")
-      all2 <- Task.collectAllPar(List(FutureHelpers.fromFuture(request1), FutureHelpers.fromFuture(request2), FutureHelpers.fromFuture(request3)))
+      all2 <- Task.collectAllPar(List(FutureHelpers.fromFuture(request1), zfut2.flatMap(_ => Task.fail(new RuntimeException("Oops!"))), FutureHelpers.fromFuture(request3)))
       _ <- ZIO.foreach(all2.zipWithIndex)(printWriteI("collectAllPar-fromFuture", extractDate))
       _ <- log("END:   ZIO Parallel Future 2\n")
 

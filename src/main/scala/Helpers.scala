@@ -3,6 +3,8 @@ import java.time.LocalDateTime
 import Helpers.TimedResponse
 import com.softwaremill.sttp.{Request, sttp}
 import com.softwaremill.sttp._
+import org.slf4j.Logger
+import scalaz.zio.console.{Console, putStrLn}
 import scalaz.zio.{Task, ZIO}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,9 +21,19 @@ object Helpers {
   val request3: Request[String, Nothing] = sttp.get(uri3)
   val reqs = List(request1, request2, request3)
 
+  val errorResponse: Task[Response[String]] = Task.fail(new RuntimeException("Oh no! I'm a failure!"))
   val extractDate: Response[String] => Option[String] = r => r.header("Date")
 
   type TimedResponse = TimedResult[Response[String]]
+
+  def handleError[R[_], S](err: Throwable, logger: Logger)(implicit b: SttpBackend[R, S]): ZIO[Console, Nothing, StatusCode] = for {
+    statusCode <- Task.succeed(err.getMessage.length)
+    errorMsg = s"App failure. Exiting with status '$statusCode'. Error message: '${err.getMessage}'"
+    _ <- Task.succeed(logger.error(errorMsg))
+    _ <- putStrLn(errorMsg)
+    _ <- Task.succeed(b.close())
+  } yield statusCode
+
 }
 
 
