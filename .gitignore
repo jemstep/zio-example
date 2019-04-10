@@ -1,0 +1,21 @@
+# IDEA GENERATED FILES
+logs
+target
+tags
+.idea
+.idea_modules
+.classpath
+.project
+.settings
+
+# ENSIME GENERATED files
+.ensime
+.ensime_cache/
+ensime-langserver.log
+pc.stdout.log
+
+# JAVA OPT FILE
+.jvmopts
+
+
+
