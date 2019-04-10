@@ -38,23 +38,23 @@ object ExampleApp extends App {
       fiber1 <- taskTime(request1.send()).fork
       fiber2 <- taskTime(request2.send()).fork
       fiber3 <- taskTime(request3.send()).fork
-      fiber = fiber1 zip fiber2 zip fiber3
+      fiber = (fiber1 zip fiber2) zip fiber3
       tuple <- fiber.join
-      _ <- printWrite("Par1", extractDate)(tuple._1._1)
-      _ <- printWrite("Par2", extractDate)(tuple._1._2)
-      _ <- printWrite("Par3", extractDate)(tuple._2)
+      _ <- printWrite("Fibre1", extractDate)(tuple._1._1)
+      _ <- printWrite("Fibre2", extractDate)(tuple._1._2)
+      _ <- printWrite("Fibre3", extractDate)(tuple._2)
       _ <- log("END: Fork Join with separate output effect\n")
 
       _ <- log("BEGIN: Fork Join with combined output effect")
-      tfib1 <- timePrintWrite("Fib1")(request1).fork
-      tfib2 <- timePrintWrite("Fib2")(request2).fork
-      tfib3 <- timePrintWrite("Fib3")(request3).fork
+      tfib1 <- timePrintWrite("Combined1")(request1).fork
+      tfib2 <- timePrintWrite("Combined2")(request2).fork
+      tfib3 <- timePrintWrite("Combined3")(request3).fork
       _ <- (tfib1 zip tfib2 zip tfib3).join
       _ <- log("END:   Fork Join with combined output effect\n")
 
       _ <- log("BEGIN: Parallel collect with foreach output")
       all <- Task.collectAllPar(timed)
-      _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("Col", extractDate))
+      _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("Collect", extractDate))
       _ <- log("END:   Parallel collect with foreach output\n")
 
       _ <- log("BEGIN: Parallel foreach")
