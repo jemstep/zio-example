@@ -33,9 +33,9 @@ object ExampleApp extends App {
       _ <- log("END:   Basic Sequential\n")
 
       _ <- log("BEGIN: Fork Join with separate output effect")
-      fiber1 <- taskTime(request1.send()).fork
-      fiber2 <- taskTime(request2.send()).fork
-      fiber3 <- taskTime(request3.send()).fork
+      fiber1 <- timeTask(request1.send()).fork
+      fiber2 <- timeTask(request2.send()).fork
+      fiber3 <- timeTask(request3.send()).fork
       fiber = (fiber1 zip fiber2) zip fiber3
       tuple <- fiber.join
       _ <- printWrite("Fibre1", extractDate)(tuple._1._1)
@@ -51,7 +51,7 @@ object ExampleApp extends App {
       _ <- log("END:   Fork Join with combined output effect\n")
 
       _ <- log("BEGIN: Parallel collect with separate foreach output")
-      timed: List[Task[TimedResult[Response[String]]]] = reqs.map(_.send()).map(taskTime)
+      timed: List[Task[TimedResult[Response[String]]]] = reqs.map(_.send()).map(timeTask)
       all <- Task.collectAllPar(timed)
       _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("Collect", extractDate))
       _ <- log("END:   Parallel collect with foreach output\n")
@@ -73,7 +73,7 @@ object ExampleApp extends App {
     implicit val backend  = AsyncHttpClientZioBackend()
 
     for {
-      t <- taskTime(req.send())
+      t <- timeTask(req.send())
       _ <- printWrite(prefix, extractDate)(t)
     } yield backend.close()
   }
@@ -98,9 +98,9 @@ object ExampleApp extends App {
     _ <- putStrLn(s"$now\t$msg")
   } yield ()
 
-  def taskTime[Result](action: Task[Result]): Task[TimedResult[Result]] = for {
+  def timeTask[Result](task: Task[Result]): Task[TimedResult[Result]] = for {
     t1 <- Task(LocalDateTime.now())
-    r  <- action
+    r  <- task
     t2 <- Task(LocalDateTime.now())
   } yield TimedResult(t1, t2, r)
 
