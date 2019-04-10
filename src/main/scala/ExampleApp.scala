@@ -24,10 +24,16 @@ object ExampleApp extends App {
     val request2: Request[String, Nothing] = sttp.get(uri2)
     val request3: Request[String, Nothing] = sttp.get(uri3)
     val reqs = List(request1, request2, request3)
+    val sent: List[Task[Response[String]]] = reqs.map(_.send())
+    val timed: List[Task[TimedResult[Response[String]]]] = sent.map(taskTime)
 
     for {
-      _ <- timePrintWrite("Seq")((request1, 0))
-      _ <- timePrintWrite("Seq")((request2, 1))
+
+      // Basic Sequential
+      _ <- timePrintWrite("Seq1")(request1)
+      _ <- timePrintWrite("Seq2")(request2)
+
+      // Fork Join with separate output effect
       fiber1 <- taskTime(request1.send()).fork
       fiber2 <- taskTime(request2.send()).fork
       fiber3 <- taskTime(request3.send()).fork
@@ -36,22 +42,39 @@ object ExampleApp extends App {
       _ <- printWrite("Par1", extractDate)(tuple._1._1)
       _ <- printWrite("Par2", extractDate)(tuple._1._2)
       _ <- printWrite("Par3", extractDate)(tuple._2)
-      _ <- ZIO.foreachPar(reqs.zipWithIndex)(timePrintWrite("All"))
-    } yield {
-      backend.close()
-    }
+
+      // Fork Join with combined output effect
+      _ <- timePrintWrite("Fib1")(request1).fork
+      _ <- timePrintWrite("Fib2")(request2).fork
+      _ <- timePrintWrite("Fib3")(request3).fork
+
+      // Parallel collect with foreach output
+      all <- Task.collectAllPar(timed)
+      _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("Col", extractDate))
+
+      // Parallel foreach
+      _ <- ZIO.foreachPar(reqs.zipWithIndex)(timePrintWriteI("For"))
+    } yield backend.close()
 
   }
 
   val extractDate: Response[String] => Option[String] = r => r.header("Date")
 
-  def timePrintWrite(prefix: String)(req: (Request[String, Nothing], Int)): ZIO[Console, Throwable, Unit] = {
+  def timePrintWriteI(prefix: String)(req: (Request[String, Nothing], Int)): ZIO[Console, Throwable, Unit] = {
+    timePrintWrite(s"$prefix${req._2 + 1}")(req._1)
+  }
+
+  def timePrintWrite(prefix: String)(req: Request[String, Nothing]): ZIO[Console, Throwable, Unit] = {
     implicit val backend  = AsyncHttpClientZioBackend()
 
     for {
-      t <- taskTime(req._1.send())
-      _ <- printWrite(s"${prefix}${req._2 + 1}", extractDate)(t)
+      t <- taskTime(req.send())
+      _ <- printWrite(prefix, extractDate)(t)
     } yield backend.close()
+  }
+
+  def printWriteI[Result, E](prefix: String, extract: Result => E)(tr: (TimedResult[Result], Int)): ZIO[Console, Throwable, Unit] = {
+    printWrite(s"$prefix${tr._2 + 1}", extract)(tr._1)
   }
 
   def printWrite[Result, E](prefix: String, extract: Result => E)(tr: TimedResult[Result]): ZIO[Console, Throwable, Unit] = for {
