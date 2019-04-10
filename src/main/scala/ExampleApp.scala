@@ -29,11 +29,12 @@ object ExampleApp extends App {
 
     for {
 
-      // Basic Sequential
+      _ <- log("BEGIN: Basic Sequential")
       _ <- timePrintWrite("Seq1")(request1)
       _ <- timePrintWrite("Seq2")(request2)
+      _ <- log("END:   Basic Sequential")
 
-      // Fork Join with separate output effect
+      _ <- log("BEGIN: Fork Join with separate output effect")
       fiber1 <- taskTime(request1.send()).fork
       fiber2 <- taskTime(request2.send()).fork
       fiber3 <- taskTime(request3.send()).fork
@@ -42,18 +43,22 @@ object ExampleApp extends App {
       _ <- printWrite("Par1", extractDate)(tuple._1._1)
       _ <- printWrite("Par2", extractDate)(tuple._1._2)
       _ <- printWrite("Par3", extractDate)(tuple._2)
+      _ <- log("END: Fork Join with separate output effect")
 
-      // Fork Join with combined output effect
+      _ <- log("BEGIN: Fork Join with combined output effect")
       _ <- timePrintWrite("Fib1")(request1).fork
       _ <- timePrintWrite("Fib2")(request2).fork
       _ <- timePrintWrite("Fib3")(request3).fork
+      _ <- log("END:   Fork Join with combined output effect")
 
-      // Parallel collect with foreach output
+      _ <- log("BEGIN: Parallel collect with foreach output")
       all <- Task.collectAllPar(timed)
       _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("Col", extractDate))
+      _ <- log("END:   Parallel collect with foreach output")
 
-      // Parallel foreach
+      _ <- log("BEGIN: Parallel foreach")
       _ <- ZIO.foreachPar(reqs.zipWithIndex)(timePrintWriteI("For"))
+      _ <- log("END:   Parallel foreach")
     } yield backend.close()
 
   }
@@ -88,6 +93,10 @@ object ExampleApp extends App {
     _ <- Task(pw.close())
   } yield ()
 
+  def log(msg: String): ZIO[Console, Throwable, Unit] = for {
+    now <- Task(LocalDateTime.now)
+    _ <- putStrLn(s"$now\t$msg")
+  } yield ()
 
   def taskTime[Result](action: Task[Result]): Task[TimedResult[Result]] = for {
     t1 <- Task(LocalDateTime.now())
