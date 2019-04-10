@@ -26,8 +26,11 @@ object ExampleApp extends App {
     val request3: Request[String, Nothing] = sttp.get(uri3)
     val reqs = List(request1, request2, request3)
 
-    for {
+    // Declare now, run later
+    val timedTasks: List[Task[TimedResult[Response[String]]]] = reqs.map(_.send()).map(timeTask)
+    val timedResults: Task[List[TimedResult[Response[String]]]] = Task.collectAllPar(timedTasks)
 
+    for {
       _ <- log("BEGIN: Basic Sequential")
       _ <- timePrintWrite("Seq1")(request1)
       _ <- timePrintWrite("Seq2")(request2)
@@ -42,7 +45,7 @@ object ExampleApp extends App {
       _ <- printWrite("Fibre1", extractDate)(tuple._1._1)
       _ <- printWrite("Fibre2", extractDate)(tuple._1._2)
       _ <- printWrite("Fibre3", extractDate)(tuple._2)
-      _ <- log("END: Fork Join with separate output effect\n")
+      _ <- log("END:   Fork Join with separate output effect\n")
 
       _ <- log("BEGIN: Fork Join with combined output effect")
       tfib1 <- timePrintWrite("Combined1")(request1).fork
@@ -52,14 +55,13 @@ object ExampleApp extends App {
       _ <- log("END:   Fork Join with combined output effect\n")
 
       _ <- log("BEGIN: Parallel collect with separate foreach output")
-      timed: List[Task[TimedResult[Response[String]]]] = reqs.map(_.send()).map(timeTask)
-      all <- Task.collectAllPar(timed)
-      _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("Collect", extractDate))
-      _ <- log("END:   Parallel collect with foreach output\n")
+      all <- timedResults
+      _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("collectAllPar", extractDate))
+      _ <- log("END:   Parallel collect with separate foreach output\n")
 
-      _ <- log("BEGIN: Parallel foreach")
-      _ <- ZIO.foreachPar(reqs.zipWithIndex)(timePrintWriteI("For"))
-      _ <- log("END:   Parallel foreach\n")
+      _ <- log("BEGIN: Parallel foreach with combined output effect")
+      _ <- ZIO.foreachPar(reqs.zipWithIndex)(timePrintWriteI("foreachPar"))
+      _ <- log("END:   Parallel foreach with combined output effect\n")
     } yield backend.close()
 
   }
