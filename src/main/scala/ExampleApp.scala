@@ -29,6 +29,12 @@ object ExampleApp extends App {
       seq2 <- taskTime(request2.send())
       _ <- printWrite("Seq1", extractDate)(seq1)
       _ <- printWrite("Seq2", extractDate)(seq2)
+      fiber1 <- taskTime(request1.send()).fork
+      fiber2 <- taskTime(request2.send()).fork
+      fiber = fiber1 zip fiber2
+      tuple <- fiber.join
+      _ <- printWrite("Par1", extractDate)(tuple._1)
+      _ <- printWrite("Par2", extractDate)(tuple._2)
     } yield {
       backend.close()
     }
@@ -37,7 +43,7 @@ object ExampleApp extends App {
 
   def printWrite[Result, E](prefix: String, extract: Result => E)(tr: TimedResult[Result]) = for {
     now <- Task(LocalDateTime.now)
-    header = s"$now $prefix Start: '${tr.start}' End: '${tr.end}' Diff: '${tr.diff}' Extract: '${extract(tr.result)}'\n"
+    header = s"$now $prefix Start: '${tr.start}' End: '${tr.end}' Diff: '${tr.diff}' Extract: '${extract(tr.result)}'"
     _ <- putStrLn(s"\n\n>>>\n$header\n<<<\n")
     filename = s"/tmp/zio-${prefix}-${now.getNano}.out"
     pw <- Task(new PrintWriter(new File(filename)))
