@@ -24,8 +24,6 @@ object ExampleApp extends App {
     val request2: Request[String, Nothing] = sttp.get(uri2)
     val request3: Request[String, Nothing] = sttp.get(uri3)
     val reqs = List(request1, request2, request3)
-    val sent: List[Task[Response[String]]] = reqs.map(_.send())
-    val timed: List[Task[TimedResult[Response[String]]]] = sent.map(taskTime)
 
     for {
 
@@ -52,7 +50,8 @@ object ExampleApp extends App {
       _ <- (tfib1 zip tfib2 zip tfib3).join
       _ <- log("END:   Fork Join with combined output effect\n")
 
-      _ <- log("BEGIN: Parallel collect with foreach output")
+      _ <- log("BEGIN: Parallel collect with separate foreach output")
+      timed: List[Task[TimedResult[Response[String]]]] = reqs.map(_.send()).map(taskTime)
       all <- Task.collectAllPar(timed)
       _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("Collect", extractDate))
       _ <- log("END:   Parallel collect with foreach output\n")
