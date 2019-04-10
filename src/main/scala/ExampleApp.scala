@@ -24,10 +24,8 @@ object ExampleApp extends App {
     val reqs = List(request1, request2)
 
     for {
-      seq1 <- taskTime(request1.send())
-      seq2 <- taskTime(request2.send())
-      _ <- printWrite("Seq1", extractDate)(seq1)
-      _ <- printWrite("Seq2", extractDate)(seq2)
+      _ <- timePrintWrite("Seq")((request1, 0))
+      _ <- timePrintWrite("Seq")((request2, 1))
       fiber1 <- taskTime(request1.send()).fork
       fiber2 <- taskTime(request2.send()).fork
       fiber = fiber1 zip fiber2
@@ -43,7 +41,7 @@ object ExampleApp extends App {
 
   val extractDate: Response[String] => Option[String] = r => r.header("Date")
 
-  def timePrintWrite[R[_], S](prefix: String)(req: (Request[String, Nothing], Int)): ZIO[Console, Throwable, Unit] = {
+  def timePrintWrite(prefix: String)(req: (Request[String, Nothing], Int)): ZIO[Console, Throwable, Unit] = {
     implicit val backend  = AsyncHttpClientZioBackend()
 
     for {
