@@ -19,10 +19,10 @@ object Helpers {
   val request1: Request[String, Nothing] = sttp.get(uri1)
   val request2: Request[String, Nothing] = sttp.get(uri2)
   val request3: Request[String, Nothing] = sttp.get(uri3)
-  val reqs = List(request1, request2, request3)
+
+  def reqs[F[_]](implicit b: SttpBackend[F, Nothing]) = List(request1, request2, request3).map(_.send())
 
   val errorResponse: Task[Response[String]] = Task.fail(new RuntimeException("Oh no! I'm a failure!"))
-  val extractDate: Response[String] => Option[String] = r => r.header("Date")
 
   type TimedResponse = TimedResult[Response[String]]
 

@@ -30,25 +30,25 @@ object ZIOFutureApp extends App {
       _ <- log("BEGIN: ZIO Sequential Future 1")
       seq1 <- FutureHelpers.fromFuture(request1)
       seq2 <- FutureHelpers.fromFuture(request2)
-      _ <- printWrite("ZIOFuture1", extractDate)(seq1)
-      _ <- printWrite("ZIOFuture2", extractDate)(seq2)
+      _ <- printWrite("ZIOFuture1")(seq1)
+      _ <- printWrite("ZIOFuture2")(seq2)
       _ <- log("END:   ZIO Sequential Future 1\n")
 
       _ <- log("BEGIN: ZIO Sequential Future 2 - outside val")
       seq3 <- zfut1
       seq4 <- zfut2
-      _ <- printWrite("ZIOFuture3", extractDate)(seq3)
-      _ <- printWrite("ZIOFuture4", extractDate)(seq4)
+      _ <- printWrite("ZIOFuture3")(seq3)
+      _ <- printWrite("ZIOFuture4")(seq4)
       _ <- log("END:   ZIO Sequential Future 2 - outside val\n")
 
       _ <- log("BEGIN: ZIO Parallel Future 1")
       all1 <- timedResults
-      _ <- ZIO.foreach(all1.zipWithIndex)(printWriteI("collectAllPar-fromFuture", extractDate))
+      _ <- ZIO.foreach(all1.zipWithIndex)(printWriteI("collectAllPar-fromFuture"))
       _ <- log("END:   ZIO Parallel Future 1\n")
 
       _ <- log("BEGIN: ZIO Parallel Future 2")
       all2 <- Task.collectAllPar(List(FutureHelpers.fromFuture(request1), zfut2.flatMap(_ => Task.fail(new RuntimeException("Oops!"))), FutureHelpers.fromFuture(request3)))
-      _ <- ZIO.foreach(all2.zipWithIndex)(printWriteI("collectAllPar-fromFuture", extractDate))
+      _ <- ZIO.foreach(all2.zipWithIndex)(printWriteI("collectAllPar-fromFuture"))
       _ <- log("END:   ZIO Parallel Future 2\n")
 
     } yield backend.close()
