@@ -27,14 +27,14 @@ object ZIOApp extends App {
 
     for {
       _ <- log("BEGIN: Basic Sequential")
-      _ <- timePrintWrite("Seq1")(request1.send())
-      _ <- timePrintWrite("Seq2")(request2.send())
+      _ <- timePrintWrite("Seq1")(request1)
+      _ <- timePrintWrite("Seq2")(request2)
       _ <- log("END:   Basic Sequential\n")
 
       _ <- log("BEGIN: Fork Join with separate output effect")
-      fiber1 <- timeTask(request1.send()).fork
-      fiber2 <- timeTask(request2.send()).fork
-      fiber3 <- timeTask(request3.send()).fork
+      fiber1 <- timeTask(request1).fork
+      fiber2 <- timeTask(request2).fork
+      fiber3 <- timeTask(request3).fork
       fiber = (fiber1 zip fiber2) zip fiber3
       tuple <- fiber.join
       _ <- printWrite("Fibre1")(tuple._1._1)
@@ -43,9 +43,9 @@ object ZIOApp extends App {
       _ <- log("END:   Fork Join with separate output effect\n")
 
       _ <- log("BEGIN: Fork Join with combined output effect")
-      tfib1 <- timePrintWrite("Combined1")(request1.send()).fork
-      tfib2 <- timePrintWrite("Combined2")(request2.send()).fork
-      tfib3 <- timePrintWrite("Combined3")(request3.send()).fork
+      tfib1 <- timePrintWrite("Combined1")(request1).fork
+      tfib2 <- timePrintWrite("Combined2")(request2).fork
+      tfib3 <- timePrintWrite("Combined3")(request3).fork
       _ <- (tfib1 zip tfib2 zip tfib3).join
       _ <- log("END:   Fork Join with combined output effect\n")
 
@@ -55,7 +55,7 @@ object ZIOApp extends App {
       _ <- log("END:   Parallel collect with separate foreach output\n")
 
       _ <- log("BEGIN: Parallel collect with an error")
-      tasksWithErr = List(request1.send(), errorResponse, request3.send()).map(timeTask)
+      tasksWithErr = List(request1, errorResponse, request3).map(timeTask)
       all <- Task.collectAllPar(tasksWithErr)
       _ <- ZIO.foreach(all.zipWithIndex)(printWriteI("collectAllParWithErr"))
       _ <- log("END:   Parallel collect with an error\n")
