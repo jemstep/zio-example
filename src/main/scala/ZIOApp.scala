@@ -2,6 +2,8 @@
 import java.io.{File, PrintWriter}
 import java.time.LocalDateTime
 
+import com.jemstep.time.{OurTime, time}
+
 import scalaz.zio._
 import scalaz.zio.console.{Console, putStrLn}
 import com.softwaremill.sttp._
@@ -13,15 +15,12 @@ import org.slf4j.{Logger, LoggerFactory}
 import scalaz.zio.clock.Clock
 
 object ZIOApp extends App {
-
-  type OurAppEnv = Console with Clock
-  type ZIOApp = ZIO[OurAppEnv, Nothing, StatusCode]
-
+  val environment = new Clock.Live with Console.Live with OurTime.Live
   def logger: Logger = LoggerFactory.getLogger(this.getClass)
   implicit val backend: SttpBackend[Task, Nothing]  = AsyncHttpClientZioBackend()
 
-  def run(args: List[String]): ZIOApp =
-    httpClientExample.foldM(err => handleError(err, logger), _ => UIO.succeed(0))
+  def run(args: List[String]) =
+    httpClientExample.provide(environment).foldM(err => handleError(err, logger), _ => UIO.succeed(0))
 
   def httpClientExample: ZIO[OurAppEnv, Throwable, Unit] = {
 
@@ -75,8 +74,11 @@ object ZIOApp extends App {
 
 object ZIOHelpers {
 
-  def log(msg: String): ZIO[Console, Throwable, Unit] = for {
-    now <- Task(LocalDateTime.now)
+  type OurAppEnv = Console with Clock with OurTime
+  type OurZIOApp = ZIO[OurAppEnv, Nothing, Int]
+
+  def log(msg: String): ZIO[Console with OurTime, Throwable, Unit] = for {
+    now <- time.now
     _ <- putStrLn(s"$now\t$msg")
   } yield ()
 

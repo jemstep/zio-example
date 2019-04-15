@@ -23,7 +23,7 @@ object Helpers {
 
   type TimedResponse = TimedResult[Response[String]]
 
-  def handleError[R[_], S](err: Throwable, logger: Logger)(implicit b: SttpBackend[R, S]): ZIO[Console, Nothing, StatusCode] = for {
+  def handleError[R[_], S](err: Throwable, logger: Logger)(implicit b: SttpBackend[R, S]): ZIO[Console, Nothing, Int] = for {
     statusCode <- Task.succeed(err.getMessage.length)
     errorMsg = s"App failure. Exiting with status '$statusCode'. Error message: '${err.getMessage}'"
     _ <- Task.succeed(logger.error(errorMsg))

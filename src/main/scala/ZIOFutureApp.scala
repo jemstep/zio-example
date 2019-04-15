@@ -1,11 +1,13 @@
 
 import scalaz.zio._
-import scalaz.zio.console.Console
 import com.softwaremill.sttp._
 import Helpers._
 import ZIOHelpers._
+import com.jemstep.time.OurTime
 import com.softwaremill.sttp.asynchttpclient.future.AsyncHttpClientFutureBackend
 import org.slf4j.{Logger, LoggerFactory}
+import scalaz.zio.clock.Clock
+import scalaz.zio.console.Console
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -13,11 +15,12 @@ object ZIOFutureApp extends App {
   def logger: Logger = LoggerFactory.getLogger(this.getClass)
   implicit val ec = ExecutionContext.global
   implicit val backend: SttpBackend[Future, Nothing] = AsyncHttpClientFutureBackend()
+  val environment = new Clock.Live with Console.Live with OurTime.Live
 
-  def run(args: List[String]): ZIO[Console, Nothing, StatusCode] =
-    httpClientExample.foldM(err => handleError(err, logger), _ => UIO.succeed(0))
+  def run(args: List[String]) =
+    httpClientExample.provide(environment).foldM(err => handleError(err, logger), _ => UIO.succeed(0))
 
-  def httpClientExample: ZIO[Console, Throwable, Unit] = {
+  def httpClientExample: ZIO[OurAppEnv, Throwable, Unit] = {
 
     val zfut1: Task[TimedResponse] = FutureHelpers.fromFuture(request1)
     val zfut2: Task[TimedResponse] = FutureHelpers.fromFuture(request2)
