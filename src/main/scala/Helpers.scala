@@ -1,5 +1,6 @@
 package com.jemstep.helpers
 
+import com.jemstep.time.{ time, OurTime }
 import java.time.LocalTime
 
 import Helpers.TimedResponse
@@ -56,7 +57,6 @@ object FutureHelpers {
 
 }
 
-import java.time.LocalDateTime
 import scalaz.zio._
 
 case class TimedResult[Result](start: LocalTime, end: LocalTime, result: Result) {

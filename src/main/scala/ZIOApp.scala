@@ -1,5 +1,5 @@
 import java.io.{File, PrintWriter}
-import com.jemstep.cups.{Cups, cups}
+import com.jemstep.randomInternetRequests.{RandomInternetRequests, randomInternetRequests}
 import java.time.LocalDateTime
 
 import com.jemstep.time.{OurTime, time}
@@ -24,12 +24,12 @@ object ZIOApp extends App {
     httpClientExample.provide(environment).foldM(err => handleError(err, logger), _ => UIO.succeed(0))
 
   // A much simpler example involving only services
-  def cupsExample: ZIO[Cups with Console, Throwable, (String, String, String)] = for {
-    result1 <- cups.request1
+  def randomInternetRequestsExample: ZIO[RandomInternetRequests with Console, Throwable, (String, String, String)] = for {
+    result1 <- randomInternetRequests.request1
     _       <- putStrLn(s"Result1: $result1")
-    result2 <- cups.request2
+    result2 <- randomInternetRequests.request2
     _       <- putStrLn(s"Result2: $result2")
-    result3 <- cups.request3
+    result3 <- randomInternetRequests.request3
     _       <- putStrLn(s"Result3: $result3")
   } yield (result1.toString, result2.toString, result3.toString)
 
