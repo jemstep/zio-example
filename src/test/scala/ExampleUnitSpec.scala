@@ -10,14 +10,15 @@ import scalaz.zio.console.Console
 class ExampleUnitSpec extends Specification {
 
   trait TestRandomInternetRequests extends RandomInternetRequests {
-    override val randomInternetRequests: RandomInternetRequests.Service[RandomInternetRequests] = new RandomInternetRequests.Service[RandomInternetRequests] {
-      override def request1: ZIO[RandomInternetRequests, Throwable, Either[String, String]] =
-        ZIO.succeed(Right("A successfuly parsed body"))
-      override def request2: ZIO[RandomInternetRequests, Throwable, Either[String, String]] =
-        ZIO.succeed(Left("An unsuccessfuly parsed body"))
-      override def request3: ZIO[RandomInternetRequests, Throwable, Either[String, String]] =
-        ZIO.succeed(Right("Another successfuly parsed body"))
-    }
+    override val randomInternetRequests: RandomInternetRequests.Service[RandomInternetRequests] =
+      new RandomInternetRequests.Service[RandomInternetRequests] {
+        override def request1: ZIO[RandomInternetRequests, Throwable, Either[String, String]] =
+          ZIO.succeed(Right("A successfuly parsed body"))
+        override def request2: ZIO[RandomInternetRequests, Throwable, Either[String, String]] =
+          ZIO.succeed(Left("An unsuccessfuly parsed body"))
+        override def request3: ZIO[RandomInternetRequests, Throwable, Either[String, String]] =
+          ZIO.succeed(Right("Another successfuly parsed body"))
+      }
   }
 
   trait TestConsole {
