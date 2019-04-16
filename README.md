@@ -12,4 +12,5 @@ sbt:zio-example> test:compile
 sbt:zio-example> runMain ZIOApp
 sbt:zio-example> runMain FutureApp
 sbt:zio-example> runMain ZIOFutureApp
+sbt:zio-example> test
 ```
