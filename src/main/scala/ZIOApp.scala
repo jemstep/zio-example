@@ -1,5 +1,5 @@
-
 import java.io.{File, PrintWriter}
+import com.jemstep.cups.{Cups, cups}
 import java.time.LocalDateTime
 
 import com.jemstep.time.{OurTime, time}
@@ -8,8 +8,9 @@ import scalaz.zio._
 import scalaz.zio.console.{Console, putStrLn}
 import com.softwaremill.sttp._
 import com.softwaremill.sttp.asynchttpclient.zio.AsyncHttpClientZioBackend
-import TimedResult._
-import Helpers._
+import com.jemstep.helpers.TimedResult._
+import com.jemstep.helpers.Helpers._
+import com.jemstep.helpers.TimedResult
 import ZIOHelpers._
 import org.slf4j.{Logger, LoggerFactory}
 import scalaz.zio.clock.Clock
@@ -22,6 +23,17 @@ object ZIOApp extends App {
   def run(args: List[String]) =
     httpClientExample.provide(environment).foldM(err => handleError(err, logger), _ => UIO.succeed(0))
 
+  // A much simpler example involving only services
+  def cupsExample: ZIO[Cups with Console, Throwable, (String, String, String)] = for {
+    result1 <- cups.request1
+    _       <- putStrLn(s"Result1: $result1")
+    result2 <- cups.request2
+    _       <- putStrLn(s"Result2: $result2")
+    result3 <- cups.request3
+    _       <- putStrLn(s"Result3: $result3")
+  } yield (result1.toString, result2.toString, result3.toString)
+
+  // A flashy demo of control over effects
   def httpClientExample: ZIO[OurAppEnv, Throwable, Unit] = {
 
     // Declare now, run later

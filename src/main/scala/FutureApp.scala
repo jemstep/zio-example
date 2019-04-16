@@ -2,8 +2,8 @@ import com.softwaremill.sttp.asynchttpclient.future.AsyncHttpClientFutureBackend
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
-import Helpers._
-import FutureHelpers._
+import com.jemstep.helpers.Helpers._
+import com.jemstep.helpers.FutureHelpers._
 import com.softwaremill.sttp.SttpBackend
 
 object FutureApp extends App {

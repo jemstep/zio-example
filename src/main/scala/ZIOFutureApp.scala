@@ -1,7 +1,7 @@
 
 import scalaz.zio._
 import com.softwaremill.sttp._
-import Helpers._
+import com.jemstep.helpers.Helpers._
 import ZIOHelpers._
 import com.jemstep.time.OurTime
 import com.softwaremill.sttp.asynchttpclient.future.AsyncHttpClientFutureBackend
@@ -10,6 +10,7 @@ import scalaz.zio.clock.Clock
 import scalaz.zio.console.Console
 
 import scala.concurrent.{ExecutionContext, Future}
+import com.jemstep.helpers.FutureHelpers
 
 object ZIOFutureApp extends App {
   def logger: Logger = LoggerFactory.getLogger(this.getClass)
@@ -29,7 +30,7 @@ object ZIOFutureApp extends App {
     val timedTasks: List[Task[TimedResponse]] = List(zfut1, zfut2, zfut3)
     val timedResults: Task[List[TimedResponse]] = Task.collectAllPar(timedTasks)
 
-      for {
+    for {
       _ <- log("BEGIN: ZIO Sequential Future 1")
       seq1 <- FutureHelpers.fromFuture(request1)
       seq2 <- FutureHelpers.fromFuture(request2)
