@@ -14,11 +14,4 @@ object TimedResult {
     t2 <- Task(LocalDateTime.now())
   } yield TimedResult(t1, t2, r)
 
-  def timeFun[Result](fun: () => Result): TimedResult[Result] = {
-    val t1 = LocalDateTime.now()
-    val r = fun()
-    val t2 = LocalDateTime.now()
-    TimedResult(t1, t2, r)
-  }
-
 }
