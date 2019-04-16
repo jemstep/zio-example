@@ -10,9 +10,9 @@ import scalaz.zio.{Task, ZIO}
 import scala.concurrent.{ExecutionContext, Future}
 
 object Helpers {
-  val uri1 = uri"http://localhost:631/errq"
-  val uri2 = uri"http://localhost:631/"
-  val uri3 = uri"http://localhost:631/"
+  val uri1 = uri"https://www.jemstep.com/"
+  val uri2 = uri"https://ifconfig.co/"
+  val uri3 = uri"https://icanhazdadjoke.com/"
   def request1[F[_]](implicit b: SttpBackend[F, Nothing]): F[Response[String]] = sttp.get(uri1).send()
   def request2[F[_]](implicit b: SttpBackend[F, Nothing]): F[Response[String]] = sttp.get(uri2).send()
   def request3[F[_]](implicit b: SttpBackend[F, Nothing]): F[Response[String]] = sttp.get(uri3).send()
