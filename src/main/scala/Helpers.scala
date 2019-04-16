@@ -1,4 +1,4 @@
-import java.time.LocalDateTime
+import java.time.LocalTime
 
 import Helpers.TimedResponse
 import com.softwaremill.sttp.sttp
@@ -37,15 +37,15 @@ object Helpers {
 object FutureHelpers {
 
   def log[A](msg: A)(implicit ec: ExecutionContext): Future[Unit] = for {
-    now <- Future.successful(LocalDateTime.now)
+    now <- Future.successful(LocalTime.now)
     _ <- Future.successful(println(s"$now\t$msg"))
   } yield ()
 
   def futureReq(response: Future[Response[String]])(implicit ec: ExecutionContext): Future[TimedResponse] = {
     for {
-      t1 <- Future.successful(LocalDateTime.now())
+      t1 <- Future.successful(LocalTime.now())
       r  <- response
-      t2 <- Future.successful(LocalDateTime.now())
+      t2 <- Future.successful(LocalTime.now())
     } yield TimedResult(t1, t2, r)
   }
 

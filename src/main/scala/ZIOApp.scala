@@ -25,8 +25,8 @@ object ZIOApp extends App {
   def httpClientExample: ZIO[OurAppEnv, Throwable, Unit] = {
 
     // Declare now, run later
-    val timedTasks: List[Task[TimedResponse]] = reqs.map(timeTask)
-    val timedResults: Task[List[TimedResponse]] = Task.collectAllPar(timedTasks)
+    val timedTasks: List[OurTask[TimedResponse]] = reqs.map(timeTask)
+    val timedResults: OurTask[List[TimedResponse]] = ZIO.collectAllPar(timedTasks)
 
     for {
       _ <- log("BEGIN: Basic Sequential")
@@ -76,17 +76,18 @@ object ZIOHelpers {
 
   type OurAppEnv = Console with Clock with OurTime
   type OurZIOApp = ZIO[OurAppEnv, Nothing, Int]
+  type OurTask[A] = ZIO[OurAppEnv, Throwable, A]
 
   def log(msg: String): ZIO[Console with OurTime, Throwable, Unit] = for {
     now <- time.now
     _ <- putStrLn(s"$now\t$msg")
   } yield ()
 
-  def timePrintWriteI[A](prefix: String)(task: (Task[A], Int)): ZIO[Console, Throwable, Unit] = {
+  def timePrintWriteI[A](prefix: String)(task: (Task[A], Int)): ZIO[Console with OurTime, Throwable, Unit] = {
     timePrintWrite(s"$prefix${task._2 + 1}")(task._1)
   }
 
-  def timePrintWrite[A](prefix: String)(task: Task[A]): ZIO[Console, Throwable, Unit] = {
+  def timePrintWrite[A](prefix: String)(task: Task[A]): ZIO[Console with OurTime, Throwable, Unit] = {
     for {
       t <- timeTask(task)
       _ <- printWrite(prefix)(t)

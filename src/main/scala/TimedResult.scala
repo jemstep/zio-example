@@ -1,17 +1,18 @@
-import java.time.LocalDateTime
+import java.time.LocalTime
 
+import com.jemstep.time.{OurTime, time}
 import scalaz.zio._
 
-case class TimedResult[Result](start: LocalDateTime, end: LocalDateTime, result: Result) {
+case class TimedResult[Result](start: LocalTime, end: LocalTime, result: Result) {
   override def toString: String = s"start: '$start' end: '$end'"
 }
 
 object TimedResult {
 
-  def timeTask[Result](task: Task[Result]): Task[TimedResult[Result]] = for {
-    t1 <- Task(LocalDateTime.now())
+  def timeTask[Result](task: ZIO[OurTime, Throwable, Result]): ZIO[OurTime, Throwable, TimedResult[Result]] = for {
+    t1 <- time.now
     r  <- task
-    t2 <- Task(LocalDateTime.now())
+    t2 <- time.now
   } yield TimedResult(t1, t2, r)
 
 }
