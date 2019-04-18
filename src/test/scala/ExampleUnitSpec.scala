@@ -3,21 +3,37 @@ import com.jemstep.randomInternetRequests.RandomInternetRequests
 import java.io.Reader
 import java.io.IOException
 import java.io.PrintStream
+import scalaz.zio.Exit.Cause.Fail
+import scalaz.zio.Exit.Failure
 
 import scalaz.zio._
 import scalaz.zio.console.Console
 
 class ExampleUnitSpec extends Specification {
 
-  trait TestRandomInternetRequests extends RandomInternetRequests {
+  trait TestRandomInternetRequestsWithNoFailures extends RandomInternetRequests {
     override val randomInternetRequests: RandomInternetRequests.Service[RandomInternetRequests] =
       new RandomInternetRequests.Service[RandomInternetRequests] {
-        override def request1: ZIO[RandomInternetRequests, Throwable, Either[String, String]] =
-          ZIO.succeed(Right("A successfuly parsed body"))
-        override def request2: ZIO[RandomInternetRequests, Throwable, Either[String, String]] =
-          ZIO.succeed(Left("An unsuccessfuly parsed body"))
-        override def request3: ZIO[RandomInternetRequests, Throwable, Either[String, String]] =
-          ZIO.succeed(Right("Another successfuly parsed body"))
+        override def request1: ZIO[RandomInternetRequests, Throwable, String] =
+          ZIO.succeed("A successfuly parsed body")
+        override def request2: ZIO[RandomInternetRequests, Throwable, String] =
+          ZIO.succeed("One more successfully parsed body")
+        override def request3: ZIO[RandomInternetRequests, Throwable, String] =
+          ZIO.succeed("Another successfuly parsed body")
+      }
+  }
+
+  val failureException = new Exception("An unsuccessfully parsed body!")
+
+  trait TestRandomInternetRequestsWithAFailure extends RandomInternetRequests {
+    override val randomInternetRequests: RandomInternetRequests.Service[RandomInternetRequests] =
+      new RandomInternetRequests.Service[RandomInternetRequests] {
+        override def request1: ZIO[RandomInternetRequests, Throwable, String] =
+          ZIO.succeed("A successfuly parsed body")
+        override def request2: ZIO[RandomInternetRequests, Throwable, String] =
+          ZIO.fail(failureException)
+        override def request3: ZIO[RandomInternetRequests, Throwable, String] =
+          ZIO.succeed("Another successfuly parsed body")
       }
   }
 
@@ -44,10 +60,13 @@ class ExampleUnitSpec extends Specification {
   }
 
   object TestEnvironmentWithDummyLogging extends Console with RandomInternetRequests
-      with TestConsole with TestRandomInternetRequests
+      with TestRandomInternetRequestsWithNoFailures with TestConsole
 
   object TestEnvironmentWithRealLogging extends Console with RandomInternetRequests
-      with TestRandomInternetRequests with Console.Live
+      with TestRandomInternetRequestsWithNoFailures with Console.Live
+
+  object TestEnvironmentWithDummyLoggingAndAFailingRequest extends Console with RandomInternetRequests
+      with TestRandomInternetRequestsWithAFailure with TestConsole
 
   "randomInternetRequests example" should {
 
@@ -55,16 +74,24 @@ class ExampleUnitSpec extends Specification {
 
     "produce the expected results without actual logging using the test environment with a dummy console" in {
       runtime.unsafeRun(ZIOApp.randomInternetRequestsExample.provide(TestEnvironmentWithDummyLogging)) must_==
-      (("Right(A successfuly parsed body)",
-        "Left(An unsuccessfuly parsed body)",
-        "Right(Another successfuly parsed body)"))
+      (("A successfuly parsed body",
+        "One more successfully parsed body",
+        "Another successfuly parsed body"))
     }
 
     "produce the expected results with actual logging using the test environment with real logging" in {
       runtime.unsafeRun(ZIOApp.randomInternetRequestsExample.provide(TestEnvironmentWithRealLogging)) must_==
-      (("Right(A successfuly parsed body)",
-        "Left(An unsuccessfuly parsed body)",
-        "Right(Another successfuly parsed body)"))
+      (("A successfuly parsed body",
+        "One more successfully parsed body",
+        "Another successfuly parsed body"))
+    }
+
+    "produce an error and no log results when using a dummy console and a requests service with errors" in {
+      runtime.unsafeRunSync(
+        ZIOApp
+          .randomInternetRequestsExample
+          .provide(TestEnvironmentWithDummyLoggingAndAFailingRequest)) must_==
+      (Failure(Fail(failureException)))
     }
   }
 }

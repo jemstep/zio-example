@@ -31,7 +31,7 @@ object ZIOApp extends App {
     _       <- putStrLn(s"Result2: $result2")
     result3 <- randomInternetRequests.request3
     _       <- putStrLn(s"Result3: $result3")
-  } yield (result1.toString, result2.toString, result3.toString)
+  } yield (result1, result2, result3)
 
   // A flashy demo of control over effects
   def httpClientExample: ZIO[OurAppEnv, Throwable, Unit] = {
