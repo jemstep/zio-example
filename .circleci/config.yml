@@ -30,6 +30,10 @@ jobs:
       - store_artifacts:
           path: target/universal/
       - save_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - ~/zio
+      - save_cache:
           key: sbt-cache
           paths:
             - "~/.ivy2/cache"
@@ -43,6 +47,7 @@ jobs:
     steps:
       - restore_cache:
           keys:
+            - v1-repo-{{ .Environment.CIRCLE_SHA1 }}
             - sbt-cache
       - run:
           name: Test
@@ -55,6 +60,7 @@ jobs:
     steps:
       - restore_cache:
           keys:
+            - v1-repo-{{ .Environment.CIRCLE_SHA1 }}
             - sbt-cache
       - run:
           name: Run ZIOApp
@@ -67,6 +73,7 @@ jobs:
     steps:
       - restore_cache:
           keys:
+            - v1-repo-{{ .Environment.CIRCLE_SHA1 }}
             - sbt-cache
       - run:
           name: Run FutureApp
@@ -79,6 +86,7 @@ jobs:
     steps:
       - restore_cache:
           keys:
+            - v1-repo-{{ .Environment.CIRCLE_SHA1 }}
             - sbt-cache
       - run:
           name: Run ZIOFutureApp
