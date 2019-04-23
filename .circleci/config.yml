@@ -28,7 +28,7 @@ jobs:
           command: sbt "runMain ZIOFutureApp"
       - store_artifacts:
           path: target/universal/zio-example-0.1.zip
-          destination: dist
+          destination: $ARTIFACT_BUILD
       - save_cache:
           key: sbt-cache
           paths:
