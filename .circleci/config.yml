@@ -13,7 +13,7 @@ jobs:
           key: sbt-cache
       - run:
           name: Compile and create dist package
-          command: cat /dev/null | sbt clean update dist
+          command: cat /dev/null | sbt clean update test:compile dist
       - run:
           name: Test
           command: sbt test
