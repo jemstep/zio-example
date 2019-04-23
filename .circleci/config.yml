@@ -26,9 +26,11 @@ jobs:
       - run:
           name: Run ZIOFutureApp
           command: sbt "runMain ZIOFutureApp"
+      - run:
+          name: Prepare Artifacts
+          command: mv target/universal/zio-example-0.1.zip target/universal/$ARTIFACT_BUILD
       - store_artifacts:
-          path: target/universal/zio-example-0.1.zip
-          destination: $ARTIFACT_BUILD
+          path: target/universal/
       - save_cache:
           key: sbt-cache
           paths:
