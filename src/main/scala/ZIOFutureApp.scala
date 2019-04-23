@@ -50,10 +50,10 @@ object ZIOFutureApp extends App {
       _ <- ZIO.foreach(all1.zipWithIndex)(printWriteI("collectAllPar-fromFuture"))
       _ <- log("END:   ZIO Parallel Future 1\n")
 
-      _ <- log("BEGIN: ZIO Parallel Future 2")
-      all2 <- Task.collectAllPar(List(FutureHelpers.fromFuture(request1), zfut2.flatMap(_ => Task.fail(new RuntimeException("Oops!"))), FutureHelpers.fromFuture(request3)))
-      _ <- ZIO.foreach(all2.zipWithIndex)(printWriteI("collectAllPar-fromFuture"))
-      _ <- log("END:   ZIO Parallel Future 2\n")
+      // _ <- log("BEGIN: ZIO Parallel Future 2")
+      // all2 <- Task.collectAllPar(List(FutureHelpers.fromFuture(request1), zfut2.flatMap(_ => Task.fail(new RuntimeException("Oops!"))), FutureHelpers.fromFuture(request3)))
+      // _ <- ZIO.foreach(all2.zipWithIndex)(printWriteI("collectAllPar-fromFuture"))
+      // _ <- log("END:   ZIO Parallel Future 2\n")
 
     } yield backend.close()
   }
