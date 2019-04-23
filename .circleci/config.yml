@@ -1,0 +1,41 @@
+version: 2
+jobs:
+  build:
+    # working_directory: ~/samplescala
+    docker:
+      - image: jemstep/docker-scala:xenial
+    environment:
+      - SBT_VERSION: 1.2.8
+    steps:
+      - run: echo 'export ARTIFACT_BUILD=$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.zip' >> $BASH_ENV
+      - checkout
+      - restore_cache:
+          key: sbt-cache
+      - run:
+          name: Compile and create dist package
+          command: cat /dev/null | sbt clean update dist
+      - run:
+          name: Test
+          command: sbt test
+      - run:
+          name: Run ZIOApp
+          command: sbt "runMain ZIOApp"
+      - run:
+          name: Run FutureApp
+          command: sbt "runMain FutureApp"
+      - run:
+          name: Run ZIOFutureApp
+          command: sbt "runMain ZIOFutureApp"
+      - store_artifacts:
+          path: target/universal/zio-example-0.1.zip
+          destination: dist
+      - save_cache:
+          key: sbt-cache
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+      # - deploy:
+      #     command: |
+      #         mv target/universal/zio-example-0.1.zip $CIRCLE_ARTIFACTS/$ARTIFACT_BUILD
+      #         aws s3 cp $CIRCLE_ARTIFACTS/$ARTIFACT_BUILD s3://devops.datapunks.org/builds/samplescala/ --metadata {\"git_sha1\":\"$CIRCLE_SHA1\"}
