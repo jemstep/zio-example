@@ -1,31 +1,29 @@
 version: 2
 jobs:
-  build:
-    # working_directory: ~/samplescala
+  checkout_code:
     docker:
       - image: jemstep/docker-scala:xenial
+    working_directory: ~/zio
+    steps:
+      - checkout
+      - save_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - ~/zio
+  build_artifact:
+    docker:
+      - image: jemstep/docker-scala:xenial
+    working_directory: ~/zio
     environment:
       - SBT_VERSION: 1.2.8
     steps:
       - run: echo 'export ARTIFACT_BUILD=$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.zip' >> $BASH_ENV
-      - checkout
       - restore_cache:
-          key: sbt-cache
+          keys:
+            - v1-repo-{{ .Environment.CIRCLE_SHA1 }}
       - run:
           name: Compile and create dist package
           command: cat /dev/null | sbt clean update test:compile dist
-      - run:
-          name: Test
-          command: sbt test
-      - run:
-          name: Run ZIOApp
-          command: sbt "runMain ZIOApp"
-      - run:
-          name: Run FutureApp
-          command: sbt "runMain FutureApp"
-      - run:
-          name: Run ZIOFutureApp
-          command: sbt "runMain ZIOFutureApp"
       - run:
           name: Prepare Artifacts
           command: mv target/universal/zio-example-0.1.zip target/universal/$ARTIFACT_BUILD
@@ -37,7 +35,87 @@ jobs:
             - "~/.ivy2/cache"
             - "~/.sbt"
             - "~/.m2"
-      # - deploy:
-      #     command: |
-      #         mv target/universal/zio-example-0.1.zip $CIRCLE_ARTIFACTS/$ARTIFACT_BUILD
-      #         aws s3 cp $CIRCLE_ARTIFACTS/$ARTIFACT_BUILD s3://devops.datapunks.org/builds/samplescala/ --metadata {\"git_sha1\":\"$CIRCLE_SHA1\"}
+
+  test:
+    docker:
+      - image: jemstep/docker-scala:xenial
+    working_directory: ~/zio
+    steps:
+      - restore_cache:
+          keys:
+            - sbt-cache
+      - run:
+          name: Test
+          command: sbt test
+
+  zio_app:
+    docker:
+      - image: jemstep/docker-scala:xenial
+    working_directory: ~/zio
+    steps:
+      - restore_cache:
+          keys:
+            - sbt-cache
+      - run:
+          name: Run ZIOApp
+          command: sbt "runMain ZIOApp"
+
+  future_app:
+    docker:
+      - image: jemstep/docker-scala:xenial
+    working_directory: ~/zio
+    steps:
+      - restore_cache:
+          keys:
+            - sbt-cache
+      - run:
+          name: Run FutureApp
+          command: sbt "runMain FutureApp"
+
+  zio_future_app:
+    docker:
+      - image: jemstep/docker-scala:xenial
+    working_directory: ~/zio
+    steps:
+      - restore_cache:
+          keys:
+            - sbt-cache
+      - run:
+          name: Run ZIOFutureApp
+          command: sbt "runMain ZIOFutureApp"
+
+  deploy:
+    docker:
+      - image: jemstep/docker-scala:xenial
+    working_directory: ~/zio
+    steps:
+      - run:
+          name: Dummy Deployment
+          command: date
+
+workflows:
+  version: 2
+  build_test_deploy:
+    jobs:
+      - checkout_code
+      - build_artifact:
+          requires:
+            - checkout_code
+      - test:
+          requires:
+            - build_artifact
+      - zio_app:
+          requires:
+            - build_artifact
+      - future_app:
+          requires:
+            - build_artifact
+      - zio_future_app:
+          requires:
+            - build_artifact
+      - deploy:
+          requires:
+            - test
+            - zio_app
+            - future_app
+            - zio_future_app
