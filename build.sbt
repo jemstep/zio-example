@@ -15,10 +15,12 @@ val logBack = Seq("ch.qos.logback" % "logback-classic" % "1.2.3")
 
 val sttpVersion = "1.5.12"
 
-val commonDeps = Seq(
+val sttpDeps = Seq(
   "com.softwaremill.sttp" %% "core" % sttpVersion,
   "com.softwaremill.sttp" %% "async-http-client-backend-future" % sttpVersion,
-  "com.softwaremill.sttp" %% "async-http-client-backend-zio" % sttpVersion) ++ specs2Deps ++ logBack
+  "com.softwaremill.sttp" %% "async-http-client-backend-zio" % sttpVersion)
+
+val commonDeps = specs2Deps ++ logBack ++ sttpDeps
 
 libraryDependencies ++= commonDeps
 
