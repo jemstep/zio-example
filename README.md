@@ -16,3 +16,5 @@ sbt:zio-example> runMain FutureApp
 sbt:zio-example> runMain ZIOFutureApp
 sbt:zio-example> test
 ```
+
+## Integrating CircleCI
